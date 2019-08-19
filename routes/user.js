@@ -29,6 +29,8 @@ router.get('/all', ADMIN, async (req, res) => {
     //     res.status(500).json({ message: err.message })
     // }
     await USER.find()
+        //USED TO BRING IN CREATED POST RATHER THAN JUST IDS
+        // .populate('createdPost')
         .then(found => res.status(200).json(found))
         .catch(err => res.status(500).json(err))
 })
@@ -59,7 +61,7 @@ router.post('/signup', async (req, res) => {
     // }
     await newUser.save()
         .then(createdUser => {
-            var token = JWT.sign({
+            let token = JWT.sign({
                 id: createdUser.id
             }, process.env.JWT_SECRET, {
                     expiresIn: 60 * 60 * 24
@@ -79,8 +81,8 @@ router.post('/login', async (req, res) => {
     await USER.findOne({ username: req.body.username })
         .then(foundUser => {
             bcrypt.compare(req.body.password, foundUser.password, (err, match) => {
-                if (match) {
-                    var token = JWT.sign({
+                if (match && !err) {
+                    let token = JWT.sign({
                         id: foundUser.id
                     }, process.env.JWT_SECRET, {
                             expiresIn: 60 * 60 * 24
@@ -92,7 +94,7 @@ router.post('/login', async (req, res) => {
                         status: 200
                     })
                 } else {
-                    res.status(401).json({ status: 401, message: 'PASSWORDS DO NOT MATCH' })
+                    res.status(401).json({ status: 401, message: 'PASSWORDS DO NOT MATCH', error: err })
                 }
             })
         })
@@ -117,4 +119,5 @@ router.put('/update', AUTH, async (req, res) => {
         .then(updated => res.status(200).json(updated))
         .catch(err => res.status(500).json(err))
 })
+
 module.exports = router;
